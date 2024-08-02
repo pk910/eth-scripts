@@ -36,6 +36,9 @@ write_files:
       EOF
 
       chmod +x /root/node1.sh
+      /root/node1.sh init-el
+      /root/node1.sh start-el
+      /root/node1.sh start-bn
       
 runcmd:
   - [ chmod, +x, /root/setup.sh ]

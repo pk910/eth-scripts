@@ -14,10 +14,10 @@ vc_image="${vc_image:-sigp/lighthouse:latest}"
 # datadirs
 base_dir="${base_dir:-/data/$node_name}"
 config_dir="${config_dir:-$base_dir/config}"
-el_datadir="${config_dir:-$base_dir/execution}"
-bn_datadir="${config_dir:-$base_dir/beacon}"
-vc_datadir="${config_dir:-$base_dir/validator}"
-jwtsecret_file="${config_dir:-$base_dir/jwtsecret}"
+el_datadir="${el_datadir:-$base_dir/execution}"
+bn_datadir="${bn_datadir:-$base_dir/beacon}"
+vc_datadir="${vc_datadir:-$base_dir/validator}"
+jwtsecret_file="${jwtsecret_file:-$base_dir/jwtsecret}"
 
 # extra args
 el_extra_args="${el_extra_args:-}"

@@ -26,13 +26,13 @@ write_files:
       run_setup_script "setup-docker"
 
       mkdir -p /root/nodes
-      load_script /root/nodes/node-geth-lighthouse "nodes/node-geth-lighthouse.sh"
+      load_script /root/nodes/node-geth-lighthouse.sh "nodes/node-geth-lighthouse.sh"
 
       cat << EOF > /root/node1.sh
       bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting)
       source /root/nodes/node-geth-lighthouse.sh
-      load_github_config "https://github.com/ethpandaops/pectra-devnets.git" "network-configs/devnet-2"
-      main_script "$@"
+      load_github_config "https://github.com/ethpandaops/pectra-devnets.git" "network-configs/devnet-2/metadata"
+      main_script "\$@"
       EOF
 
       chmod +x /root/node1.sh

@@ -12,7 +12,7 @@ bn_image="${bn_image:-sigp/lighthouse:latest}"
 vc_image="${vc_image:-sigp/lighthouse:latest}"
 
 # datadirs
-base_dir="${base_dir:/data/$node_name}"
+base_dir="${base_dir:-/data/$node_name}"
 config_dir="${config_dir:-$base_dir/config}"
 el_datadir="${config_dir:-$base_dir/execution}"
 bn_datadir="${config_dir:-$base_dir/beacon}"
@@ -58,6 +58,15 @@ start_el() {
   metrics_port=$(expr $el_metrics_port + $port_offset)
   ensure_jwtsecret
 
+  bootnodes=""
+  if [ -f $config_dir/enodes.txt ]; then
+    bootnodes_arr=()
+    while IFS= read -r line; do
+      bootnodes_arr+=($line)
+    done < $config_dir/enodes.txt
+    bootnodes="--bootnodes=$(join_by , "${bootnodes_arr[@]}")"
+  fi
+
   # geth
   docker run -d --restart unless-stopped --name=$node_name-el \
     --pull always \
@@ -77,10 +86,11 @@ start_el() {
     --authrpc.jwtsecret=/execution-auth.jwt \
     --nat=extip:$extip \
     --metrics --metrics.addr=0.0.0.0 --metrics.port=$metrics_port \
-    --syncmode=full "${el_extra_args[@]}"
+    --syncmode=full $bootnodes "${el_extra_args[@]}"
 }
 
 init_el() {
+  ensure_datadir $el_datadir
   docker run --rm --name=$node_name-el-init \
     --pull always \
     -u $node_uid \
@@ -226,6 +236,14 @@ join_by() {
 }
 
 load_github_config() {
+  if [ -f $config_dir/genesis.json ]; then
+    return
+  fi
+
+  if [ ! -f $config_dir ]; then
+    mkdir -p $config_dir
+  fi
+
   tempdir=$(mktemp -d 2>/dev/null || mktemp -d -t 'devnet')
   if [ -z "$(which git)" ]; then
     apt-get install -y git

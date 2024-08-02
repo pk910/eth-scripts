@@ -68,6 +68,15 @@ start_el() {
   fi
 
   # geth
+  extra_args=()
+  if [ ! -z "$el_extra_args" ]; then
+    extra_args+=($el_extra_args)
+  fi
+  extra_args+=("--syncmode=full")
+  if [ ! -z "$bootnodes" ]; then
+    extra_args+=("$bootnodes")
+  fi
+
   docker run -d --restart unless-stopped --name=$node_name-el \
     --pull always \
     -u $node_uid \
@@ -86,7 +95,7 @@ start_el() {
     --authrpc.jwtsecret=/execution-auth.jwt \
     --nat=extip:$extip \
     --metrics --metrics.addr=0.0.0.0 --metrics.port=$metrics_port \
-    --syncmode=full $bootnodes "${el_extra_args[@]}"
+    "${extra_args[@]}"
 }
 
 init_el() {
@@ -118,6 +127,15 @@ start_bn() {
     done < $config_dir/bootstrap_nodes.txt
     bootnodes="--boot-nodes=$(join_by , "${bootnodes_arr[@]}")"
   fi
+
+  extra_args=()
+  if [ ! -z "$bn_extra_args" ]; then
+    extra_args+=($bn_extra_args)
+  fi
+  extra_args+=("--testnet-dir /config")
+  if [ ! -z "$bootnodes" ]; then
+    extra_args+=("$bootnodes")
+  fi
   
   # lighthouse bn
   docker run -d --restart unless-stopped --name=$node_name-bn \
@@ -132,20 +150,26 @@ start_bn() {
     -p $metrics_port:$metrics_port \
     -it $bn_image \
     lighthouse beacon_node \
-    --testnet-dir /config \
     --datadir=/data \
     --disable-upnp --disable-enr-auto-update --enr-address=$extip \
     --port=$p2p_port --discovery-port=$p2p_port --enr-tcp-port=$p2p_port --enr-udp-port=$p2p_port \
     --listen-address=0.0.0.0 \
     --http --http-address=0.0.0.0 --http-port=$rpc_port \
     --execution-endpoint=http://172.17.0.1:$engine_port --execution-jwt=/execution-auth.jwt \
-    --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port $bootnodes "${bn_extra_args[@]}"
+    --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port \
+    "${bn_extra_args[@]}"
 }
 
 start_vc() {
   ensure_datadir $vc_datadir
   rpc_port=$(expr $bn_rpc_port + $port_offset)
   metrics_port=$(expr $vc_metrics_port + $port_offset)
+
+  extra_args=()
+  if [ ! -z "$vc_extra_args" ]; then
+    extra_args+=($vc_extra_args)
+  fi
+  extra_args+=("--testnet-dir /config")
 
   # lighthouse vc
   docker run -d --restart unless-stopped --name=$node_name-vc \
@@ -156,13 +180,12 @@ start_vc() {
     -p $metrics_port:$metrics_port \
     -it $vc_image \
     lighthouse validator_client \
-    --testnet-dir /config \
     --validators-dir=/data/keys \
     --secrets-dir=/data/secrets \
     --init-slashing-protection \
     --beacon-nodes=http://172.17.0.1:$rpc_port \
     --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port \
-    --graffiti $graffiti --suggested-fee-recipient $fee_recipient "${vc_extra_args[@]}"
+    --graffiti $graffiti --suggested-fee-recipient $fee_recipient "${extra_args[@]}"
 }
 
 copy_vc_keys() {

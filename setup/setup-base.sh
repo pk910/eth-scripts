@@ -4,6 +4,7 @@ if ! [ -f /etc/ssh/sshd_config.d/pknet.conf ]; then
   echo "# pk-net ssh settings" > /etc/ssh/sshd_config.d/pknet.conf
   echo "Port 16110" >> /etc/ssh/sshd_config.d/pknet.conf
   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config.d/pknet.conf
+  service ssh restart
 fi
 
 if ! [ -f /root/.ssh/authorized_keys ]; then

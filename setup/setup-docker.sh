@@ -22,6 +22,12 @@ fi
 
 service docker restart
 
+if ! [ -f /etc/cron.daily/docker-prune ]; then
+  echo '#!/bin/bash' > /etc/cron.daily/docker-prune
+  echo 'docker system prune -af --filter "until=$((30*24))h"' >> /etc/cron.daily/docker-prune
+  chmod +x /etc/cron.daily/docker-prune
+fi
+
 echo ""
 echo "Docker setup complete!"
 echo ""

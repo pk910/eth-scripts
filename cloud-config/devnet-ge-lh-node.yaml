@@ -1,0 +1,42 @@
+#cloud-config
+packages:
+  - curl
+  - sudo
+  - ca-certificates
+  - gnupg
+  - lsb-release
+write_files:
+  - path: /root/setup.sh
+    content: |
+      mkdir -p /root/setup
+      load_script() {
+        if ! [ -f $1 ]; then
+          curl -o $1 https://raw.githubusercontent.com/pk910/eth-scripts/main/$2
+          chmod +x $1
+        fi
+      }
+      run_setup_script() {
+        script=$1
+        shift
+        load_script /root/setup/$script.sh "setup/$script.sh"
+        /root/setup/$script.sh "$@"
+      }
+      
+      run_setup_script "setup-base"
+      run_setup_script "setup-docker"
+
+      mkdir -p /root/nodes
+      load_script /root/nodes/node-geth-lighthouse "nodes/node-geth-lighthouse.sh"
+
+      cat << EOF > /root/node1.sh
+      bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting)
+      source /root/nodes/node-geth-lighthouse.sh
+      load_github_config "https://github.com/ethpandaops/pectra-devnets.git" "network-configs/devnet-2"
+      main_script "$@"
+      EOF
+
+      chmod +x /root/node1.sh
+      
+runcmd:
+  - [ chmod, +x, /root/setup.sh ]
+  - [ /root/setup.sh ]

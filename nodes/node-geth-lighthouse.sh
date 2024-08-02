@@ -157,7 +157,7 @@ start_bn() {
     --http --http-address=0.0.0.0 --http-port=$rpc_port \
     --execution-endpoint=http://172.17.0.1:$engine_port --execution-jwt=/execution-auth.jwt \
     --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port \
-    "${bn_extra_args[@]}"
+    "${extra_args[@]}"
 }
 
 start_vc() {

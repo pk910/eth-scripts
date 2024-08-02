@@ -30,7 +30,10 @@ write_files:
 
       cat << EOF > /root/node1.sh
       #!/bin/bash
-      bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting)
+      el_image="ethpandaops/geth:lightclient-prague-devnet-1-37c4b03"
+      bn_image="ethpandaops/lighthouse:electra-devnet-1-ba28217"
+      vc_image="ethpandaops/lighthouse:electra-devnet-1-ba28217"
+      bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting --allow-insecure-genesis-sync)
       source /root/nodes/node-geth-lighthouse.sh
       load_github_config "https://github.com/ethpandaops/pectra-devnets.git" "network-configs/devnet-2/metadata"
       main_script "\$@"

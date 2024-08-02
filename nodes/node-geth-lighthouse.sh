@@ -105,7 +105,7 @@ init_el() {
     -u $node_uid \
     -v $el_datadir:/data \
     -v $config_dir:/config \
-    -it $el_image \
+    $el_image \
     init \
     --datadir=/data \
     /config/genesis.json

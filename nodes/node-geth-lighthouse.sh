@@ -70,7 +70,7 @@ start_el() {
   # geth
   extra_args=()
   if [ ! -z "$el_extra_args" ]; then
-    extra_args+=($el_extra_args)
+    extra_args+=("${el_extra_args[@]}")
   fi
   extra_args+=("--syncmode=full")
   if [ ! -z "$bootnodes" ]; then
@@ -130,7 +130,7 @@ start_bn() {
 
   extra_args=()
   if [ ! -z "$bn_extra_args" ]; then
-    extra_args+=($bn_extra_args)
+    extra_args+=("${bn_extra_args[@]}")
   fi
   extra_args+=("--testnet-dir=/config")
   if [ ! -z "$bootnodes" ]; then
@@ -167,7 +167,7 @@ start_vc() {
 
   extra_args=()
   if [ ! -z "$vc_extra_args" ]; then
-    extra_args+=($vc_extra_args)
+    extra_args+=("${vc_extra_args[@]}")
   fi
   extra_args+=("--testnet-dir=/config")
 

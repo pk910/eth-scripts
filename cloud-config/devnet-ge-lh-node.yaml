@@ -38,7 +38,7 @@ write_files:
       el_extra_args=()
       source /root/nodes/node-geth-lighthouse.sh
       load_github_config "https://github.com/ethpandaops/pectra-devnets.git" "network-configs/devnet-2/metadata"
-      bn_extra_args+=(--networkid=\$(cat \$config_dir/genesis.json | jq .config.chainId))
+      el_extra_args+=("--networkid=$(cat $config_dir/genesis.json | jq .config.chainId)")
       main_script "\$@"
       EOF
 

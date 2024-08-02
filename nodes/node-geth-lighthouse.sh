@@ -132,7 +132,7 @@ start_bn() {
   if [ ! -z "$bn_extra_args" ]; then
     extra_args+=($bn_extra_args)
   fi
-  extra_args+=("--testnet-dir /config")
+  extra_args+=("--testnet-dir=/config")
   if [ ! -z "$bootnodes" ]; then
     extra_args+=("$bootnodes")
   fi
@@ -169,7 +169,7 @@ start_vc() {
   if [ ! -z "$vc_extra_args" ]; then
     extra_args+=($vc_extra_args)
   fi
-  extra_args+=("--testnet-dir /config")
+  extra_args+=("--testnet-dir=/config")
 
   # lighthouse vc
   docker run -d --restart unless-stopped --name=$node_name-vc \

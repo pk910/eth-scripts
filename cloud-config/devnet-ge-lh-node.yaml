@@ -5,6 +5,7 @@ packages:
   - ca-certificates
   - gnupg
   - lsb-release
+  - jq
 write_files:
   - path: /root/setup.sh
     content: |
@@ -34,13 +35,16 @@ write_files:
       bn_image="ethpandaops/lighthouse:electra-devnet-1-ba28217"
       vc_image="ethpandaops/lighthouse:electra-devnet-1-ba28217"
       bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting --allow-insecure-genesis-sync)
+      el_extra_args=()
       source /root/nodes/node-geth-lighthouse.sh
       load_github_config "https://github.com/ethpandaops/pectra-devnets.git" "network-configs/devnet-2/metadata"
+      bn_extra_args+=(--networkid=\$(cat \$config_dir/genesis.json | jq .config.chainId))
       main_script "\$@"
       EOF
 
       chmod +x /root/node1.sh
       /root/node1.sh init-el
+      sleep 10
       /root/node1.sh start-el
       /root/node1.sh start-bn
       

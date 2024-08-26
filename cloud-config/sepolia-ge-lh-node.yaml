@@ -34,11 +34,11 @@ write_files:
       el_image="ethereum/client-go:latest"
       bn_image="ethpandaops/lighthouse:stable"
       vc_image="ethpandaops/lighthouse:stable"
-      bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting --allow-insecure-genesis-sync)
+      bn_extra_args=(--genesis-backfill --reconstruct-historic-states --historic-state-cache-size 2 --disable-backfill-rate-limiting --checkpoint-sync-url=https://checkpoint-sync.sepolia.ethpandaops.io)
       el_extra_args=()
       source /root/nodes/node-geth-lighthouse.sh
       load_github_config "https://github.com/pk910/sepolia.git" "metadata"
-      el_extra_args+=("--networkid=\$(cat \$config_dir/genesis.json | jq .config.chainId)")
+      el_extra_args=("--networkid=\$(cat \$config_dir/genesis.json | jq .config.chainId)")
       main_script "\$@"
       EOF
 

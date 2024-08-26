@@ -72,7 +72,6 @@ start_el() {
   if [ ! -z "$el_extra_args" ]; then
     extra_args+=("${el_extra_args[@]}")
   fi
-  extra_args+=("--syncmode=full")
   if [ ! -z "$bootnodes" ]; then
     extra_args+=("$bootnodes")
   fi

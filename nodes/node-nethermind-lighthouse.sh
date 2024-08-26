@@ -95,7 +95,7 @@ start_el() {
     --JsonRpc.JwtSecretFile=/execution-auth.jwt \
     --Network.ExternalIp=$extip \
     --Metrics.Enabled=true --Metrics.ExposeHost=0.0.0.0 --Metrics.ExposePort=$metrics_port \
-    --Init.ChainSpecPath=/config/chainspec.json \
+    --Init.ChainSpecPath=/config/chainspec.json --config=none.cfg \
     "${extra_args[@]}"
 }
 

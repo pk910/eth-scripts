@@ -27,18 +27,17 @@ write_files:
       run_setup_script "setup-docker"
 
       mkdir -p /root/nodes
-      load_script /root/nodes/node-geth-lighthouse.sh "nodes/node-geth-lighthouse.sh"
+      load_script /root/nodes/node-besu-lighthouse.sh "nodes/node-besu-lighthouse.sh"
 
       cat << EOF > /root/node1.sh
       #!/bin/bash
-      el_image="ethereum/client-go:latest"
+      el_image="ethpandaops/besu:main"
       bn_image="ethpandaops/lighthouse:stable"
       vc_image="ethpandaops/lighthouse:stable"
       bn_extra_args=(--checkpoint-sync-url=https://beaconstate-sepolia.chainsafe.io)
-      el_extra_args=()
-      source /root/nodes/node-geth-lighthouse.sh
+      el_extra_args=(--data-storage-format=BONSAI)
+      source /root/nodes/node-besu-lighthouse.sh
       load_github_config "https://github.com/pk910/sepolia.git" "metadata"
-      el_extra_args=("--networkid=\$(cat \$config_dir/genesis.json | jq .config.chainId)")
       main_script "\$@"
       EOF
 

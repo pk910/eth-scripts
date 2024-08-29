@@ -1,0 +1,28 @@
+#cloud-config
+packages:
+  - curl
+  - sudo
+  - ca-certificates
+  - gnupg
+  - lsb-release
+write_files:
+  - path: /root/setup.sh
+    content: |
+      mkdir -p /root/setup
+      run_setup_script() {
+        script=$1
+        shift
+        if ! [ -f /root/setup/$script.sh ]; then
+          curl -o /root/setup/$script.sh https://raw.githubusercontent.com/pk910/eth-scripts/main/setup/$script.sh
+          chmod +x /root/setup/$script.sh
+        fi
+        /root/setup/$script.sh "$@"
+      }
+      
+      run_setup_script "setup-base"
+      run_setup_script "setup-docker"
+      run_setup_script "setup-kurtosis"
+      
+runcmd:
+  - [ chmod, +x, /root/setup.sh ]
+  - [ /root/setup.sh ]

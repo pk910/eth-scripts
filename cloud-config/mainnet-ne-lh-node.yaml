@@ -1,0 +1,52 @@
+#cloud-config
+packages:
+  - curl
+  - sudo
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - jq
+write_files:
+  - path: /root/setup.sh
+    content: |
+      mkdir -p /root/setup
+      load_script() {
+        if ! [ -f $1 ]; then
+          curl -o $1 https://raw.githubusercontent.com/pk910/eth-scripts/main/$2
+          chmod +x $1
+        fi
+      }
+      run_setup_script() {
+        script=$1
+        shift
+        load_script /root/setup/$script.sh "setup/$script.sh"
+        /root/setup/$script.sh "$@"
+      }
+      
+      run_setup_script "setup-base"
+      run_setup_script "setup-docker"
+
+      mkdir -p /root/nodes
+      load_script /root/nodes/node-nethermind-lighthouse.sh "nodes/node-nethermind-lighthouse.sh"
+
+      cat << EOF > /root/node1.sh
+      #!/bin/bash
+      el_image="nethermindeth/nethermind:master"
+      bn_image="ethpandaops/lighthouse:stable"
+      vc_image="ethpandaops/lighthouse:stable"
+      bn_extra_args=(--checkpoint-sync-url=https://beaconstate-mainnet.chainsafe.io)
+      el_extra_args=()
+      source /root/nodes/node-nethermind-lighthouse.sh
+      load_github_config "https://github.com/pk910/mainnet.git" "metadata"
+      main_script "\$@"
+      EOF
+
+      chmod +x /root/node1.sh
+      /root/node1.sh init-el
+      sleep 10
+      /root/node1.sh start-el
+      /root/node1.sh start-bn
+      
+runcmd:
+  - [ chmod, +x, /root/setup.sh ]
+  - [ /root/setup.sh ]

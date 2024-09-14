@@ -20,8 +20,13 @@ if [ ! -z "$golang_release" ] && [ ! -d "$golang_release" ]; then
 
   mkdir $golang_release
   cd $golang_release
+  rm -rf /usr/local/go
   tar xfz ../go${golang_release}.linux-amd64.tar.gz -C /usr/local
 
   cd ..
 fi
 
+if [ ! -f /etc/profile.d/golang.sh ]; then
+  echo "export PATH=\$PATH:/usr/local/go/bin" > /etc/profile.d/golang.sh
+  chmod +x /etc/profile.d/golang.sh
+fi

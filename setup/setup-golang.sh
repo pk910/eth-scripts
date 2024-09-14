@@ -28,6 +28,6 @@ fi
 
 if [ ! -f /etc/profile.d/golang.sh ]; then
   echo "#!/bin/sh" > /etc/profile.d/golang.sh
-  echo "export PATH=\$PATH:/usr/local/go/bin" >> /etc/profile.d/golang.sh
+  echo "export PATH=\$PATH:/usr/local/go/bin:~/go/bin" >> /etc/profile.d/golang.sh
   chmod +x /etc/profile.d/golang.sh
 fi

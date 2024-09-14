@@ -27,6 +27,7 @@ if [ ! -z "$golang_release" ] && [ ! -d "$golang_release" ]; then
 fi
 
 if [ ! -f /etc/profile.d/golang.sh ]; then
-  echo "export PATH=\$PATH:/usr/local/go/bin" > /etc/profile.d/golang.sh
+  echo "#!/bin/sh" > /etc/profile.d/golang.sh
+  echo "export PATH=\$PATH:/usr/local/go/bin" >> /etc/profile.d/golang.sh
   chmod +x /etc/profile.d/golang.sh
 fi

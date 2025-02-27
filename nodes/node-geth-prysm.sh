@@ -127,19 +127,18 @@ start_bn() {
   metrics_port=$(expr $bn_metrics_port + $port_offset)
   ensure_jwtsecret
 
-  bootnodes=""
+  extra_args=()
   if [ ! -z "$el_bootnodes" ]; then
     bootnodes_arr=($el_bootnodes)
     for i in "${bootnodes_arr[@]}"; do
-      bootnodes+=" --bootstrap-node=$i"
+      extra_args+=("--bootstrap-node=$i")
     done
   elif [ -f $config_dir/bootstrap_nodes.txt ]; then
     while IFS= read -r line; do
-      bootnodes+=" --bootstrap-node=$line"
+      extra_args+=(" --bootstrap-node=$line")
     done < $config_dir/bootstrap_nodes.txt
   fi
-
-  extra_args=()
+  
   if [ ! -z "$bn_extra_args" ]; then
     extra_args+=("${bn_extra_args[@]}")
   fi

@@ -7,8 +7,8 @@ node_uid="$(id -u $node_user)"
 extip="${extip:-}" # public ip of the node
 
 # images
-el_image="${el_image:-ethereum/client-go:stable}"
-bn_image="${bn_image:-sigp/lighthouse:latest}"
+el_image="${el_image:-nethermindeth/nethermind:master}"
+bn_image="${bn_image:-gcr.io/prysmaticlabs/prysm/beacon-chain:latest}"
 vc_image="${vc_image:-sigp/lighthouse:latest}"
 
 # datadirs
@@ -65,13 +65,13 @@ start_el() {
   bootnodes=""
   if [ ! -z "$el_bootnodes" ]; then
     bootnodes_arr=($el_bootnodes)
-    bootnodes="--bootnodes=$(join_by , "${bootnodes_arr[@]}")"
+    bootnodes="--Discovery.Bootnodes=$(join_by , "${bootnodes_arr[@]}")"
   elif [ -f $config_dir/enodes.txt ]; then
     bootnodes_arr=()
     while IFS= read -r line; do
       bootnodes_arr+=($line)
     done < $config_dir/enodes.txt
-    bootnodes="--bootnodes=$(join_by , "${bootnodes_arr[@]}")"
+    bootnodes="--Discovery.Bootnodes=$(join_by , "${bootnodes_arr[@]}")"
   fi
 
   # geth
@@ -88,33 +88,26 @@ start_el() {
     -u $node_uid \
     -v $jwtsecret_file:/execution-auth.jwt:ro \
     -v $el_datadir:/data \
+    -v $config_dir:/config \
     -p $p2p_port:$p2p_port \
     -p $p2p_port:$p2p_port/udp \
     -p $rpc_port:$rpc_port \
     -p $engine_port:$engine_port \
     -p $metrics_port:$metrics_port \
     -it $el_image \
-    --datadir=/data --port=$p2p_port \
-    --http --http.addr=0.0.0.0 --http.port=$rpc_port \
-    --http.vhosts=* --http.api=eth,net,web3,txpool,personal,debug \
-    --authrpc.addr=0.0.0.0 --authrpc.port=$engine_port --authrpc.vhosts=* \
-    --authrpc.jwtsecret=/execution-auth.jwt \
-    --nat=extip:$extip \
-    --metrics --metrics.addr=0.0.0.0 --metrics.port=$metrics_port \
+    --datadir=/data --Network.DiscoveryPort=$p2p_port --Network.P2PPort=$p2p_port \
+    --JsonRpc.Enabled=true --JsonRpc.Host=0.0.0.0 --JsonRpc.Port=$rpc_port \
+    --JsonRpc.EnabledModules=net,eth,consensus,subscribe,web3,admin,debug \
+    --JsonRpc.EngineHost=0.0.0.0 --JsonRpc.EnginePort=$engine_port \
+    --JsonRpc.JwtSecretFile=/execution-auth.jwt \
+    --Network.ExternalIp=$extip \
+    --Metrics.Enabled=true --Metrics.ExposeHost=0.0.0.0 --Metrics.ExposePort=$metrics_port \
+    --Init.ChainSpecPath=/config/chainspec.json --config=none.cfg \
     "${extra_args[@]}"
 }
 
 init_el() {
   ensure_datadir $el_datadir
-  docker run --rm --name=$node_name-el-init \
-    --pull always \
-    -u $node_uid \
-    -v $el_datadir:/data \
-    -v $config_dir:/config \
-    $el_image \
-    init \
-    --datadir=/data \
-    /config/genesis.json
 }
 
 start_bn() {
@@ -128,25 +121,26 @@ start_bn() {
   bootnodes=""
   if [ ! -z "$el_bootnodes" ]; then
     bootnodes_arr=($el_bootnodes)
-    bootnodes="--boot-nodes=$(join_by , "${bootnodes_arr[@]}")"
+    for i in "${bootnodes_arr[@]}"; do
+      bootnodes+=" --bootstrap-node=$i"
+    done
   elif [ -f $config_dir/bootstrap_nodes.txt ]; then
-    bootnodes_arr=()
     while IFS= read -r line; do
-      bootnodes_arr+=($line)
+      bootnodes+=" --bootstrap-node=$line"
     done < $config_dir/bootstrap_nodes.txt
-    bootnodes="--boot-nodes=$(join_by , "${bootnodes_arr[@]}")"
   fi
 
   extra_args=()
   if [ ! -z "$bn_extra_args" ]; then
     extra_args+=("${bn_extra_args[@]}")
   fi
-  extra_args+=("--testnet-dir=/config")
+  extra_args+=("--chain-config-file=/config/config.yaml")
+  extra_args+=("--genesis-state=/config/genesis.ssz")
   if [ ! -z "$bootnodes" ]; then
     extra_args+=("$bootnodes")
   fi
   
-  # lighthouse bn
+  # prysm bn
   docker run -d --restart unless-stopped --name=$node_name-bn \
     --pull always \
     -u $node_uid \
@@ -158,14 +152,15 @@ start_bn() {
     -p $rpc_port:$rpc_port \
     -p $metrics_port:$metrics_port \
     -it $bn_image \
-    lighthouse beacon_node \
-    --datadir=/data \
-    --disable-upnp --disable-enr-auto-update --enr-address=$extip \
-    --port=$p2p_port --discovery-port=$p2p_port --enr-tcp-port=$p2p_port --enr-udp-port=$p2p_port \
-    --listen-address=0.0.0.0 \
-    --http --http-address=0.0.0.0 --http-port=$rpc_port \
-    --execution-endpoint=http://172.17.0.1:$engine_port --execution-jwt=/execution-auth.jwt \
-    --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port \
+    --accept-terms-of-use=true --datadir=/data \
+    --p2p-host-ip=$extip --p2p-tcp-port=$p2p_port --p2p-udp-port=$p2p_port \
+    --rpc-host=0.0.0.0 --rpc-port=4000 --jwt-secret=/execution-auth.jwt \
+    --execution-endpoint=http://172.17.0.1:$engine_port \
+    --http-host=0.0.0.0 --http-port=$rpc_port \
+    --monitoring-host=0.0.0.0 --monitoring-port=$metrics_port \
+    --p2p-allowlist=public --p2p-denylist=private \
+    --grpc-max-msg-size=78503835 \
+    --pprof --pprofaddr=0.0.0.0 --verbosity=info \
     "${extra_args[@]}"
 }
 
@@ -178,7 +173,7 @@ start_vc() {
   if [ ! -z "$vc_extra_args" ]; then
     extra_args+=("${vc_extra_args[@]}")
   fi
-  extra_args+=("--testnet-dir=/config")
+  extra_args+=("--chain-config-file=/config/config.yaml")
 
   # lighthouse vc
   docker run -d --restart unless-stopped --name=$node_name-vc \
@@ -188,28 +183,25 @@ start_vc() {
     -v $config_dir:/config \
     -p $metrics_port:$metrics_port \
     -it $vc_image \
-    lighthouse validator_client \
-    --validators-dir=/data/keys \
-    --secrets-dir=/data/secrets \
-    --init-slashing-protection \
-    --beacon-nodes=http://172.17.0.1:$rpc_port \
-    --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port \
-    --graffiti $graffiti --suggested-fee-recipient $fee_recipient "${extra_args[@]}"
+    --accept-terms-of-use=true --datadir=/data \
+    --wallet-dir=/data/wallet \
+    --wallet-password-file=/validator-data/wallet_pass.txt \
+    --beacon-rpc-provider=http://172.17.0.1:$rpc_port \
+    --enable-minimal-slashing-protection \
+    --monitoring-host=0.0.0.0 --monitoring-port=$metrics_port \
+    --graffiti="$graffiti" --suggested-fee-recipient $fee_recipient "${extra_args[@]}"
 }
 
 copy_vc_keys() {
   ensure_datadir $vc_datadir
   keystores=$1
-  if [ -f $vc_datadir/keys ]; then
-    rm -rf $vc_datadir/keys
+  if [ -f $vc_datadir/prysm ]; then
+    rm -rf $vc_datadir/wallet
   fi
-  if [ -f $vc_datadir/secrets ]; then
-    rm -rf $vc_datadir/secrets
-  fi
+  echo "prysm" > $vc_datadir/wallet_pass.txt
 
-  cp $keystores/keys -r $vc_datadir/keys
-  cp $keystores/secrets -r $vc_datadir/secrets
-  chown -R $node_user $vc_datadir/keys $vc_datadir/secrets
+  cp $keystores/prysm -r $vc_datadir/wallet
+  chown -R $node_user $vc_datadir/wallet
 }
 
 stop_el() {

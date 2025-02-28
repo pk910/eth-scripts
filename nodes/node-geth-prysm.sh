@@ -128,8 +128,8 @@ start_bn() {
   ensure_jwtsecret
 
   extra_args=()
-  if [ ! -z "$el_bootnodes" ]; then
-    bootnodes_arr=($el_bootnodes)
+  if [ ! -z "$bn_bootnodes" ]; then
+    bootnodes_arr=($bn_bootnodes)
     for i in "${bootnodes_arr[@]}"; do
       extra_args+=("--bootstrap-node=$i")
     done

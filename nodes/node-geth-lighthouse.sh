@@ -178,7 +178,9 @@ start_vc() {
   if [ ! -z "$vc_extra_args" ]; then
     extra_args+=("${vc_extra_args[@]}")
   fi
-  extra_args+=("--testnet-dir=/config")
+  if [ -f $config_dir/config.yaml ]; then
+    extra_args+=("--network-dir=/config")
+  fi
 
   # lighthouse vc
   docker run -d --restart unless-stopped --name=$node_name-vc \

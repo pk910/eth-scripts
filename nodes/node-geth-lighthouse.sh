@@ -28,6 +28,9 @@ el_extra_args="${el_extra_args:-}"
 bn_extra_args="${bn_extra_args:-}"
 vc_extra_args="${vc_extra_args:-}"
 
+# urls
+vc_beacon_url="${vc_beacon_url:-}"
+
 # ports
 el_p2p_port="${el_p2p_port:-30303}"
 el_rpc_port="${el_rpc_port:-8545}"
@@ -182,6 +185,11 @@ start_vc() {
     extra_args+=("--network-dir=/config")
   fi
 
+  beacon_node="$vc_beacon_url"
+  if [ -z "$beacon_node" ]; then
+    beacon_node="http://172.17.0.1:$rpc_port"
+  fi
+
   # lighthouse vc
   docker run -d --restart unless-stopped --name=$node_name-vc \
     --pull always \
@@ -194,7 +202,7 @@ start_vc() {
     --validators-dir=/data/keys \
     --secrets-dir=/data/secrets \
     --init-slashing-protection \
-    --beacon-nodes=http://172.17.0.1:$rpc_port \
+    --beacon-nodes=$beacon_node \
     --metrics --metrics-allow-origin=* --metrics-address=0.0.0.0 --metrics-port=$metrics_port \
     --graffiti $graffiti --suggested-fee-recipient $fee_recipient "${extra_args[@]}"
 }

@@ -129,8 +129,8 @@ start_bn() {
   ensure_jwtsecret
 
   bootnodes=""
-  if [ ! -z "$el_bootnodes" ]; then
-    bootnodes_arr=($el_bootnodes)
+  if [ ! -z "$bn_bootnodes" ]; then
+    bootnodes_arr=($bn_bootnodes)
     bootnodes="--boot-nodes=$(join_by , "${bootnodes_arr[@]}")"
   elif [ -f $config_dir/bootstrap_nodes.txt ]; then
     bootnodes_arr=()

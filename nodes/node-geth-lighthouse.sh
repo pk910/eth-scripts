@@ -109,15 +109,17 @@ start_el() {
 
 init_el() {
   ensure_datadir $el_datadir
-  docker run --rm --name=$node_name-el-init \
-    --pull always \
-    -u $node_uid \
-    -v $el_datadir:/data \
-    -v $config_dir:/config \
-    $el_image \
-    init \
-    --datadir=/data \
-    /config/genesis.json
+  if [ -f $config_dir/genesis.json ]; then
+    docker run --rm --name=$node_name-el-init \
+      --pull always \
+      -u $node_uid \
+      -v $el_datadir:/data \
+      -v $config_dir:/config \
+      $el_image \
+      init \
+      --datadir=/data \
+      /config/genesis.json
+  fi
 }
 
 start_bn() {
@@ -144,7 +146,9 @@ start_bn() {
   if [ ! -z "$bn_extra_args" ]; then
     extra_args+=("${bn_extra_args[@]}")
   fi
-  extra_args+=("--testnet-dir=/config")
+  if [ -f $config_dir/config.yaml ]; then
+    extra_args+=("--testnet-dir=/config")
+  fi
   if [ ! -z "$bootnodes" ]; then
     extra_args+=("$bootnodes")
   fi
